@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 class User(models.Model):
     tg_id = models.IntegerField(primary_key=True, verbose_name='Telegram ID', unique=True, blank=False, null=False, default=None)
@@ -39,7 +39,16 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
+
+    def update_total_price(self):
+        with transaction.atomic():
+            print(self.order_items.all())
+            self.total_price = sum(item.price for item in self.order_items.all())
+            self.save()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items', blank=False, null=True)
@@ -48,4 +57,4 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(blank=False, null=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
