@@ -1,7 +1,7 @@
 from django.urls import path
 from django.urls.conf import include
 
-from .views import index, UserViewSet, CategoryViewSet, ProductViewSet, OrderViewSet, OrderItemViewSet
+from .views import index, UserViewSet, CategoryViewSet, ProductViewSet, OrderViewSet, OrderItemViewSet, check_active_orders
 from rest_framework import routers
 from django.urls import path
 from rest_framework import permissions
@@ -33,5 +33,6 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', index, name='index'),
+    path('orders/admin/', check_active_orders, name='check_active_orders'),
     path('', include(router.urls))
 ]

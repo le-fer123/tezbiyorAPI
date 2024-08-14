@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -30,3 +31,29 @@ class OrderViewSet(ModelViewSet):
 class OrderItemViewSet(ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
+
+
+def check_active_orders(request):
+    orders = Order.objects.filter(status="ACTIVE").select_related('user').prefetch_related('order_items__product')
+    orders_dir = {}
+    for order in orders:
+        orders_dir[order.id] = {
+            "order_id": order.id,
+            "status": order.status,
+            "user": order.user.tg_id,
+            "order.fullname": order.user.fullname,
+            "order.phone_number": order.user.phone_number,
+            "order.total_price": order.total_price,
+            "order_items": {}
+        }
+
+        for item in order.order_items.all():
+            if item.product:
+                orders_dir[order.id]["order_items"][str(item.id)] = {
+                    "order_item_id": item.id,
+                    "product_name": item.product.name,
+                    "price": item.price,
+                    "quantity": item.quantity,
+                }
+
+    return JsonResponse(orders_dir)

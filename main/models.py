@@ -1,13 +1,16 @@
 from django.db import models, transaction
 
+
 class User(models.Model):
-    tg_id = models.IntegerField(primary_key=True, verbose_name='Telegram ID', unique=True, blank=False, null=False, default=None)
+    tg_id = models.IntegerField(primary_key=True, verbose_name='Telegram ID', unique=True, blank=False, null=False,
+                                default=None)
     fullname = models.CharField(max_length=255, blank=False, null=True)
     phone_number = models.CharField(max_length=255, blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.fullname
+
 
 class Category(models.Model):
     name = models.CharField(max_length=128, blank=False, null=True)
@@ -17,6 +20,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Product(models.Model):
     name = models.CharField(max_length=128, blank=False, null=True)
@@ -28,6 +32,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', blank=False, null=True)
@@ -43,18 +48,33 @@ class Order(models.Model):
 
     def update_total_price(self):
         with transaction.atomic():
-            print(self.order_items.all())
-            self.total_price = sum(item.price for item in self.order_items.all())
+            self.total_price = sum(item.price for item in self.order_items.exclude(status="DELETED"))
             self.save()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items', blank=False, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=False, null=True)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=False, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=True)
     quantity = models.IntegerField(blank=False, null=True)
+    status = models.CharField(max_length=128, blank=False, default="UNALTERED")
 
     def __str__(self):
         return str(self.id)
+
+    def update_price(self):
+        with transaction.atomic():
+            self.price = self.product.price * self.quantity
+            self.status = "ALTERED"
+            self.save()
+
+    def delete_item_by_status(self):
+        with transaction.atomic():
+            self.status = "DELETED"
+            self.save()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)

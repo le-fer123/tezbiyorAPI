@@ -5,6 +5,28 @@
     <title>Title</title>
 </head>
 <body>
-    <h1>TEST</h1>
+<h1>TEST</h1>
+<script>
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/orders/');
+
+    socket.onopen = function (e) {
+        console.log('WebSocket connection established');
+    };
+
+    socket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        console.log('Order update:', data);
+    };
+
+    socket.onclose = function (e) {
+        console.error('WebSocket closed unexpectedly', e);
+    };
+
+    socket.onerror = function (e) {
+        console.error('WebSocket error:', e);
+    };
+
+
+</script>
 </body>
 </html>
