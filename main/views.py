@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from .models import User, Category, Product, Order, OrderItem
 from .serializers import UserSerializer, CategorySerializer, ProductSerializer, OrderSerializer, OrderItemSerializer
-
+from django.core.cache import cache
 
 def index(request):
     return render(request, 'main/index.html')
@@ -34,7 +34,10 @@ class OrderItemViewSet(ModelViewSet):
 
 
 def check_active_orders(request):
-    orders = Order.objects.filter(status="ACTIVE").select_related('user').prefetch_related('order_items__product')
+    orders = cache.get("orders")
+    if orders is None:
+        orders = Order.objects.filter(status="ACTIVE").select_related('user').prefetch_related('order_items__product')
+        cache.set("orders", orders, timeout=10)
     orders_dir = {}
     for order in orders:
         orders_dir[order.id] = {
@@ -48,7 +51,7 @@ def check_active_orders(request):
         }
 
         for item in order.order_items.all():
-            if item.product:
+            if item.product is not None:
                 orders_dir[order.id]["order_items"][str(item.id)] = {
                     "order_item_id": item.id,
                     "product_name": item.product.name,
