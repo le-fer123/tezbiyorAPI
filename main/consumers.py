@@ -4,7 +4,6 @@ import logging
 
 class OrderConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print("WebSocket connection established")
         await self.channel_layer.group_add(
             "orders_group",
             self.channel_name
@@ -13,11 +12,11 @@ class OrderConsumer(AsyncWebsocketConsumer):
         logging.info("Connection established")
 
     async def disconnect(self, close_code):
-        print("WebSocket connection closed", close_code)
         await self.channel_layer.group_discard(
             "orders_group",
             self.channel_name
         )
+        logging.info("Connection disconnected")
 
     async def send_order_update(self, event):
         await self.send(text_data=json.dumps({
@@ -29,3 +28,4 @@ class OrderConsumer(AsyncWebsocketConsumer):
             'total_price': event['total_price'],
             'order_items': event['order_items'],
         }))
+        logging.info("Info sent")
