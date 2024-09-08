@@ -60,4 +60,3 @@ def check_active_orders(request):
                 }
 
     return JsonResponse(orders_dir)
-#test
